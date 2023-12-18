@@ -1,0 +1,713 @@
+---
+title: "bibliometrix"
+author: "Qing Zhao"
+date: "`r format(Sys.time(), '%a %b %d %X %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: '4'
+    toc_float: true
+    number_sections: true
+    anchor_sections: true
+#    code_download: true
+keywords:
+- Trends in NSFC-funded grants 
+- implementation scienc
+- plotly
+- bibliometrix
+
+---
+
+
+<br/>
+
+
+# IS scientific journal
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+# rm (list = ls (all = TRUE))
+# 
+# library(bibliometrix)
+# biblioshiny()
+
+
+
+
+
+
+
+```
+
+
+
+
+
+# IS research funding
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+rm (list = ls (all = TRUE))
+
+library(plotly)
+
+
+# 提供数据
+year <- c(2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023)
+num_of_grants <- c(1, 15, 1, 1, 1, 4, 7, 9)
+
+# 创建 Plotly 折线图
+plot <- plot_ly(x = ~year, y = ~num_of_grants, type = 'scatter', mode = 'lines+markers', text = ~num_of_grants) %>%
+  layout(
+    title = "Trends in NSFC-funded grants in implementation science",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Number of grants", range = c(0, 15))
+  ) 
+
+plot
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## 非摘要分析
+### 不同项目+数量趋势——plotly
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+
+
+# 导入 plotly 包
+library(plotly)
+
+# 输入数据
+data <- data.frame(
+  Year = c(2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023),
+  `International(Regional)Cooperation Research and Exchange Projects` = c(0, 7, 0, 0, 0, 0, 0, 0),
+  `General Projects` = c(0, 0, 0, 1, 0, 2, 2, 4),
+  `Young Scientists Fund Projects` = c(1, 0, 1, 0, 1, 1, 4, 5),
+  `Regional Science Fund Projects` = c(0, 0, 0, 0, 0, 1, 1, 0)
+)
+
+# 将数据从宽格式转换为长格式
+data_long <- tidyr::gather(data, key = "Project", value = "Number", -Year, na.rm = TRUE)
+
+# 使用 gsub 替换 Project 列中的点号为空格
+data_long$Project <- gsub("\\.", " ", data_long$Project)
+
+# 创建颜色向量
+color_vector <- c("#4E8FA0", "#8FC6B9", "#da735b", "#E7AC5F")
+
+# 绘制 plotly 纵向折线图
+plot <- plot_ly(data_long, x = ~Year, y = ~Number, 
+                type = "scatter",                          # 折线图，以project为分；
+                mode = "lines+markers",                    # Any combination of "lines", "markers", "text" joined with a "+" OR "none".
+#                linetype = ~Project,                      # 根据项目设置线型
+                color = ~Project,                          # 设置颜色分类
+                colors = color_vector,                     # 设置颜色取值
+                width = 1200 ,                             # 设置宽度
+                text = ~paste("Project: ", Project, "<br>Number: ", Number)) %>%
+  layout(title = 'Trends in NSFC-funded grants in implementation science by various projects',
+         xaxis = list(title = 'Year', type = 'category'),  # 设置X轴为类别轴
+         yaxis = list(title = 'Number of grants'))
+
+
+
+# 显示图形
+plot
+
+
+# 导入 ggplot2 包
+library(ggplot2)
+
+# 创建 ggplot2 柱形图
+gg_plot <- ggplot(data_long, aes(x = Year, y = Number, color = Project)) +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = color_vector) +
+  labs(title = 'Trends in NSFC-funded grants in implementation science by various projects',
+       x = 'Year',
+       y = 'Number of grants')
+
+# 显示图形
+print(gg_plot)
+
+
+
+```
+
+
+
+
+### 不同项目+数量趋势——ggplot2
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+# 使用 ggplot2 画图
+plot <- ggplot(data_long, aes(x = Year, y = Number, linetype = Project)) +
+  geom_line(size = 1) +
+  labs(title = "Trends in NSFC-funded grants in implementation science by various projects",
+       x = "Year",
+       y = "Number of Projects") +
+  scale_color_manual(values = c("International (Regional) Cooperation Research and Exchange Projects" = "red",
+                                 "General Projects" = "blue",
+                                 "Young Scientists Fund Projects" = "green",
+                                 "Regional Science Fund Projects" = "purple")) +  # 手动指定颜色
+  theme_minimal(base_size = 14) +                      # 设置基础字体大小
+  theme(legend.text = element_text(size = 10), legend.position = c(0.78, 0.85)) +       # 调整图例字体大小
+  coord_cartesian(xlim = c(2016, 2024), ylim = c(0, 8)) 
+  
+
+# 显示图形
+print(plot)
+
+
+
+
+# 创建 ggplot2 柱形图
+gg_plot <- ggplot(data_long, aes(x = Year, y = Number, color = Project)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() + 
+  scale_color_manual(values = color_vector) +
+  labs(title = 'Trends in NSFC-funded grants in implementation science by various projects',
+       x = 'Year',
+       y = 'Number of grants')+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),                      # 调整 x 轴文本的外观
+        plot.title = element_text(size = 20, hjust = 0.5))                      # 调整图表标题的外观
+
+gg_plot
+
+
+
+
+
+# 导出
+jpeg("output/Trends_in_NSFC-funded_grants_in_IS_by_various_projects.jpeg", height = 2100, width = 4600, res = 300)
+# 使用 ggplot2 画图
+gg_plot <- ggplot(data_long, aes(x = Year, y = Number, color = Project)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() + 
+  scale_color_manual(values = color_vector) +
+  labs(title = 'Trends in NSFC-funded grants in implementation science by various projects',
+       x = 'Year',
+       y = 'Number of grants')+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),                      # 调整 x 轴文本的外观
+        plot.title = element_text(size = 20, hjust = 0.5))                      # 调整图表标题的外观
+  
+  print(gg_plot)                                          # 需要print出来，才能保存到本地
+  
+  
+dev.off()
+
+
+
+
+
+
+```
+
+
+
+
+
+
+### 资助金额趋势——plotly（只有数量）
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+
+
+# 提供的数据
+data <- data.frame(
+  "Chinese_yuan" = c("16.5", "17", "24", "28", "30", "33", "40", "41", "45", "48", "50", "500"),
+  "Number" = c(1, 1, 1, 1, 10, 1, 2, 3, 1, 2, 1, 15)
+)
+
+
+# 创建 Plotly 柱形图
+plot <- plot_ly(data, x = ~Chinese_yuan, y = ~Number, type = 'bar', 
+                marker = list(color = 'greyblue'), 
+                text = ~Number,              # ~paste("Number: ", Number)
+                hoverinfo = 'text', textposition = 'outside', textfont = list(color = 'black')) %>%
+  layout(
+    title = "Funding amount in NSFC-funded grants in implementation science",
+    xaxis = list(title = "Chinese Yuan"),
+    yaxis = list(title = "Number of Projects")
+  )
+
+plot
+
+
+
+
+
+
+```
+
+
+
+
+### 资助金额趋势——plotly（分基金类别）
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+
+# 导入 plotly 包
+library(plotly)
+
+# 输入数据
+data <- data.frame(
+  Project_Category = c(
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "Regional Science Fund Projects",
+    "Regional Science Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects"
+  ),
+  Chinese_Yuan = c(
+    "500", "500", "500", "500", "500", "500", "500", "28", "33", "16.5", "17", "24", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "40", "40", "41", "41", "41", "45", "48", "48", "50")
+)
+
+# 创建颜色向量
+color_vector <- c("#4E8FA0", "#8FC6B9", "#da735b", "#E7AC5F")
+
+# 创建柱状图
+plot <- plot_ly(data, x = ~Chinese_Yuan, type = 'histogram', 
+                color = ~Project_Category,
+                colors = color_vector,
+                width = 1200) %>%
+  layout(title = "Funding amount in NSFC-funded grants in IS",
+         xaxis = list(title = "Chinese Yuan"),
+         yaxis = list(title = "Number of Projects", tickangle = 0),  # 旋转Y轴标签
+         legend = list(x = 1, y = 1),  # 调整图例位置
+         bargap = 0.1)  # 调整柱状图间隔，值越大间隔越宽
+
+# 显示图形
+plot
+
+
+
+
+
+
+
+```
+
+
+
+
+### 资助金额趋势——ggplot2
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+# 导入 ggplot2 包
+library(ggplot2)
+
+# 数据
+data <- data.frame(
+  Project_Category = c(
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "International (Regional) Cooperation Research and Exchange Projects",
+    "Regional Science Fund Projects",
+    "Regional Science Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "Young Scientists Fund Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects",
+    "General Projects"
+  ),
+  Chinese_Yuan = c(
+    "500", "500", "500", "500", "500", "500", "500", "28", "33", "16.5", "17", "24", "30", "30", "30", "30", "30", "30", "30", "30", "30", "30", "40", "40", "41", "41", "41", "45", "48", "48", "50")
+)
+
+# 创建颜色向量
+colors <- c("#4E8FA0", "#8FC6B9", "#da735b", "#E7AC5F")
+
+# 将 Chinese_Yuan 列转换为因子（factor）
+data$Chinese_Yuan <- factor(data$Chinese_Yuan)
+
+# 创建 ggplot2 柱形图
+plot <- ggplot(data, aes(x = Chinese_Yuan, fill = Project_Category)) +
+  geom_bar(position = "dodge") +                                # 柱状图是独立的，不是嵌套在一起
+  scale_fill_manual(values = colors) +                          # 设置不同类别的填充颜色，使用指定的 colors 向量
+  labs(title = "Funding amount in NSFC-funded grants in IS",    # 设置X、Y轴的图标
+       x = "Chinese Yuan",
+       y = "Number of Projects",
+       fill = "Project Category") +
+  theme_minimal() +                                             # 最简洁主题，指的是底色是最简单的
+  geom_text(aes(label = ..count..),                             # 图表上增加文本，指的是图里的数字
+            stat = "count",
+            position = position_dodge(width = 1),
+            vjust = -0.5,
+            size = 4) +
+  scale_y_continuous(breaks = seq(0, max(table(data$Chinese_Yuan)), by = 2),    # 设置Y轴的位置和现状
+                     limits = c(0, max(table(data$Chinese_Yuan)) + 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),                      # 调整 x 轴文本的外观
+        plot.title = element_text(size = 20, hjust = 0.5))                      # 调整图表标题的外观
+
+
+# 显示图形
+print(plot)
+
+
+# 直接把ggplot2 导成plotly动图：发现导出到html里也还是需要调整的
+plotly_plot <- ggplotly(plot)
+plotly_plot
+
+
+
+# 导出
+jpeg("output/Funding_amount_in_NSFC-funded_grants_in_IS.jpeg", height = 3800, width = 6400, res = 600)
+# 创建 ggplot2 柱形图
+plot <- ggplot(data, aes(x = Chinese_Yuan, fill = Project_Category)) +
+  geom_bar(position = "dodge") +                                # 柱状图是独立的，不是嵌套在一起
+  scale_fill_manual(values = colors) +                          # 设置不同类别的填充颜色，使用指定的 colors 向量
+  labs(title = "Funding amount in NSFC-funded grants in IS",    # 设置X、Y轴的图标
+       x = "Chinese Yuan",
+       y = "Number of Projects",
+       fill = "Project Category") +
+  theme_minimal() +                                             # 最简洁主题，指的是底色是最简单的
+  geom_text(aes(label = ..count..),                             # 图表上增加文本，指的是图里的数字
+            stat = "count",
+            position = position_dodge(width = 1),
+            vjust = -0.5,
+            size = 4) +
+  scale_y_continuous(breaks = seq(0, max(table(data$Chinese_Yuan)), by = 2),    # 设置Y轴的位置和现状
+                     limits = c(0, max(table(data$Chinese_Yuan)) + 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),                      # 调整 x 轴文本的外观
+        plot.title = element_text(size = 20, hjust = 0.5))                      # 调整图表标题的外观
+
+
+# 显示图形
+print(plot)
+
+print(plot)                                         # 需要print出来，才能保存到本地
+
+
+dev.off()
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 资助金额趋势——ggplot2
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+# 提供的数据
+data <- data.frame(
+  "Chinese_yuan" = c("16.5", "17", "24", "28", "30", "33", "40", "41", "45", "48", "50", "500"),
+  "Number" = c(1, 1, 1, 1, 10, 1, 2, 3, 1, 2, 1, 7)
+)
+
+# 将 Chinese_yuan 列转换为字符型
+data$Chinese_yuan <- as.character(data$Chinese_yuan)
+
+
+# 指定颜色
+colors <- c("#4E8FA0", "#8FC6B9", "#da735b", "#E7AC5F")
+
+
+# 创建 ggplot2 柱形图
+plot <- ggplot(data, aes(x = Chinese_yuan, y = Number)) +
+  geom_bar(stat = "identity", fill = "#808080") +  # 使用灰黑色
+  labs(title = "Funding amount in NSFC-funded grants in implementation science",
+       x = "Chinese Yuan",
+       y = "Number of Projects") +
+  theme_minimal() +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +  # 隐藏图例，旋转X轴标签
+  geom_text(aes(label = Number), vjust = -0.5, size = 7) +  # 在每个柱子上方标注数值，调整字体大小
+  scale_y_continuous(breaks = seq(0, max(data$Number), by = 2), limits = c(0, max(data$Number) + 1))  # Y轴坐标刻度的步长和范围
+
+print(plot)
+
+
+
+
+
+# 导出
+jpeg("output/Funding_amount_in_NSFC-funded_grants_in_IS.jpeg", height = 2100, width = 4600, res = 300)
+# 创建 ggplot2 柱形图
+plot <- ggplot(data, aes(x = Chinese_yuan, y = Number)) +
+  geom_bar(stat = "identity", fill = "#808080") +  # 使用灰黑色
+  labs(title = "Funding amount in NSFC-funded grants in implementation science",
+       x = "Chinese Yuan",
+       y = "Number of Projects") +
+  theme_minimal() +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1), 
+        plot.title = element_text(size = 20, hjust = 0.5)) +  # 隐藏图例，旋转X轴标签
+  geom_text(aes(label = Number), vjust = -0.5, size = 7) +  # 在每个柱子上方标注数值，调整字体大小
+  scale_y_continuous(breaks = seq(0, max(data$Number), by = 2), limits = c(0, max(data$Number) + 1))  # Y轴坐标刻度的步长和范围
+
+print(plot)                                         # 需要print出来，才能保存到本地
+  
+  
+dev.off()
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 学部
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+
+library(DT)        # DT 包提供了用于创建交互式、可排序和可过滤数据表格的功能。它可以用于在 Shiny 应用程序中嵌入，从而创建具有交互性的Web应用。
+library(formattable)     # formattable 包用于美化数据表，使其更易读和更具吸引力。它提供了各种格式化选项，允许你更改单元格的颜色、添加注释、设置小数位数等
+
+
+# 提供的数据
+data <- data.frame(
+   "Project Category" = c("International (Regional) Cooperation Research and Exchange Projects", 
+                         "Young Scientists Fund Projects", "General Projects", "Regional Science Fund Projects"),
+  "Number" = c(15, 13, 9, 2)
+)
+
+# 使用 formattable 包进行格式化
+formatted_data <- formattable::formattable(data, list(
+  `计数` = color_tile("white", "orange")
+))
+
+# 使用 DT 包创建数据表
+datatable(formatted_data, options = list(searching = TRUE), rownames = FALSE)
+
+
+
+```
+
+
+
+### 学科
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+
+
+
+# 提供的数据
+data <- data.frame(
+  "Science Department" = c("Macro Management and Policy (G04)", "Preventive Medicine (H30)", "Mental Health and Psychology (H10)", "Oncology (H18)"),
+  "Number" = c(22, 15, 1, 1),
+  "Proportion" = c("56.4%", "38.5%", "2.6%", "2.6%")
+)
+
+# # 使用 formattable 包进行格式化——能给单元格背景增加颜色
+# formatted_data <- formattable::formattable(data, list(
+#   `Number` = color_tile("white", "orange"),
+#   `Proportion` = color_tile("white", "orange")
+# ))
+
+# 使用 DT 包创建数据表——能做成交互表格（适合数据量多的）
+## 去掉行号，并设置 "Number" 列名和 "Number" 和 "Proportion" 列的数据左对齐
+datatable(data, options = list(searching = TRUE), rownames = FALSE, 
+          caption = htmltools::tags$caption(                                 # 使用htmltools包中的tags函数来创建HTML标签
+            style = 'caption-side: bottom; text-align: center;',             # 文字放置在底部，居中
+            'Table 2: ',                                                     # 文本
+            htmltools::em('This is a simple caption for the table.')         # 创建一个HTML <em> 标签，将其中的文本 "This is a simple caption for the table." 显示为强调样式（通常是斜体）
+  )
+)
+          
+          
+  #         # autoHideNavigation = TRUE) %>%
+  # formatStyle(
+  #   columns = c("Number", "Proportion"),
+  #   textAlign = 'left'
+  # ) 
+# list(dom = 't'), 不用加上去
+# editable = TRUE，使得表格可编辑
+# filter = "top"，是一个筛选功能
+
+# 在R中，使用DT包创建表格时，可以通过 caption 参数来指定表格标题。这个参数的值可以是一个字符串，也可以是一个包含HTML标签的字符串。如果你想要更灵活地定义标题的样式或添加其他HTML元素，可以使用htmltools包中的tags函数来创建HTML标签。
+# 在上述代码中，使用了htmltools::tags$caption(...)来创建 <caption> 标签，并在其中定义了样式（style）和文本内容。这样可以定制化标题的外观和样式，而不仅仅是简单的纯文本标题。
+# callback 参数允许你指定一个 JavaScript 回调函数，用于自定义表格的行为。JavaScript 回调函数是在客户端（浏览器）中执行的代码片段，可以用于处理用户与表格的交互、响应事件等。通过 callback 参数，你可以传递自定义的 JavaScript代码，以便在特定的表格事件发生时执行一些自定义的操作。例如，你可以使用回调函数来处理表格的点击、排序、过滤等事件。一个简单的示例是在表格中的某一列被点击时，弹出一个警告框。
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## 全摘要纳入
+### Full datable
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE, highlight = TRUE}
+
+library(rio)
+library(DT)  
+
+
+all <- import("data/data.xlsx", which = "all")
+
+
+
+# 计算每列的最大字符宽度
+max_char_width <- sapply(all, function(col) max(nchar(as.character(col))))
+
+# 设置DT表格参数，使其可滚动、保持列名和表头可见，并调整列宽
+datatable(all, 
+          options = list(searching = TRUE, scrollY = "800px", scrollCollapse = TRUE, fixedHeader = TRUE),
+          extensions = 'Buttons',
+          callback = JS(paste0("table.columns().header().to$().css('min-width', function(index) { return ", max_char_width, "[index] * 8 + 'px'; });")),
+          rownames = FALSE, 
+          caption = htmltools::tags$caption(                                 
+            style = 'caption-side: bottom; text-align: center;',             
+            'Table 2: ',                                                    
+            htmltools::em('This is a simple caption for the table.')        
+  )
+)
+
+
+
+
+
+
+
+# 使用 DT 包创建数据表——能做成交互表格（适合数据量多的）
+## 去掉行号，并设置 "Number" 列名和 "Number" 和 "Proportion" 列的数据左对齐
+datatable(all, options = list(searching = TRUE, scrollY = "800px", scrollCollapse = TRUE, fixedHeader = FALSE), rownames = FALSE, 
+          caption = htmltools::tags$caption(                                 
+            style = 'caption-side: bottom; text-align: center;',             
+            'Table 2: ',                                                    
+            htmltools::em('This is a simple caption for the table.')        
+  )
+)
+          
+          
+  #         # autoHideNavigation = TRUE) %>%
+  # formatStyle(
+  #   columns = c("Number", "Proportion"),
+  #   textAlign = 'left'
+  # ) 
+# list(dom = 't'), 不用加上去
+# editable = TRUE，使得表格可编辑
+# filter = "top"，是一个筛选功能
+
+
+
+# scrollY = "800px"设置垂直滚动条的最大高度
+# 在R中，使用DT包创建表格时，可以通过 caption 参数来指定表格标题。这个参数的值可以是一个字符串，也可以是一个包含HTML标签的字符串。如果你想要更灵活地定义标题的样式或添加其他HTML元素，可以使用htmltools包中的tags函数来创建HTML标签。
+# 在上述代码中，使用了htmltools::tags$caption(...)来创建 <caption> 标签，并在其中定义了样式（style）和文本内容。这样可以定制化标题的外观和样式，而不仅仅是简单的纯文本标题。
+# callback 参数允许你指定一个 JavaScript 回调函数，用于自定义表格的行为。JavaScript 回调函数是在客户端（浏览器）中执行的代码片段，可以用于处理用户与表格的交互、响应事件等。通过 callback 参数，你可以传递自定义的 JavaScript代码，以便在特定的表格事件发生时执行一些自定义的操作。例如，你可以使用回调函数来处理表格的点击、排序、过滤等事件。一个简单的示例是在表格中的某一列被点击时，弹出一个警告框。
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+### 参与人特征——见Excel
+### 摘要分析——见Excel
+
+
+
